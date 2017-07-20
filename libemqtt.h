@@ -54,6 +54,11 @@
 #define MQTT_MSG_PINGRESP     13<<4
 #define MQTT_MSG_DISCONNECT   14<<4
 
+#define MQTT_QOS0_FLAG    0<<1
+#define MQTT_QOS1_FLAG    1<<1
+#define MQTT_QOS2_FLAG    2<<1
+
+
 
 /** Extract the message type from buffer.
  * @param buffer Pointer to the packet.
@@ -114,7 +119,7 @@ uint16_t mqtt_parse_rem_len(const uint8_t* buf);
  *
  * @retval message id
  */
-uint8_t mqtt_parse_msg_id(const uint8_t* buf);
+uint16_t mqtt_parse_msg_id(const uint8_t* buf);
 
 /** Parse a packet buffer for the publish topic.
  *
@@ -155,7 +160,7 @@ uint16_t mqtt_parse_pub_msg_ptr(const uint8_t* buf, const uint8_t** msg_ptr);
 
 typedef struct {
 	void* socket_info;
-	int (*send)(void* socket_info, const void* buf, unsigned int count);
+	int32_t (*send)(void* socket_info, const void* buf, uint32_t count);
 	// Connection info
 	char clientid[50];
 	// Auth fields
@@ -261,7 +266,7 @@ int mqtt_pubrel(mqtt_broker_handle_t* broker, uint16_t message_id);
  * @retval  0 On connection error.
  * @retval -1 On IO error.
  */
-int mqtt_subscribe(mqtt_broker_handle_t* broker, const char* topic, uint16_t* message_id);
+int mqtt_subscribe(mqtt_broker_handle_t* broker, const char* topic, uint16_t* message_id, uint8_t qos);
 
 /** Unsubscribe from a topic.
  * @param broker Data structure that contains the connection information with the broker.

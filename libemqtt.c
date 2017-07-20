@@ -29,9 +29,6 @@
 #include <libemqtt.h>
 
 #define MQTT_DUP_FLAG     1<<3
-#define MQTT_QOS0_FLAG    0<<1
-#define MQTT_QOS1_FLAG    1<<1
-#define MQTT_QOS2_FLAG    2<<1
 
 #define MQTT_RETAIN_FLAG  1
 
@@ -236,8 +233,8 @@ int mqtt_connect(mqtt_broker_handle_t* broker)
 
 	// Variable header
 	uint8_t var_header[] = {
-		0x00,0x06,0x4d,0x51,0x49,0x73,0x64,0x70, // Protocol name: MQIsdp
-		0x03, // Protocol version
+		0x00,0x04,'M','Q','T','T', // Protocol name: MQIsdp
+		0x04, // Protocol version
 		flags, // Connect flags
 		broker->alive>>8, broker->alive&0xFF, // Keep alive
 	};
@@ -421,7 +418,7 @@ int mqtt_pubrel(mqtt_broker_handle_t* broker, uint16_t message_id) {
 	return 1;
 }
 
-int mqtt_subscribe(mqtt_broker_handle_t* broker, const char* topic, uint16_t* message_id) {
+int mqtt_subscribe(mqtt_broker_handle_t* broker, const char* topic, uint16_t* message_id, uint8_t qos) {
 	uint16_t topiclen = strlen(topic);
 
 	// Variable header
@@ -440,9 +437,11 @@ int mqtt_subscribe(mqtt_broker_handle_t* broker, const char* topic, uint16_t* me
 	utf_topic[1] = topiclen&0xFF;
 	memcpy(utf_topic+2, topic, topiclen);
 
+	utf_topic[topiclen+2] = qos;
+
 	// Fixed header
 	uint8_t fixed_header[] = {
-		MQTT_MSG_SUBSCRIBE | MQTT_QOS1_FLAG, // Message Type, DUP flag, QoS level, Retain
+		MQTT_MSG_SUBSCRIBE | 1<<1, // Message Type, Reserved (2nd bit set)
 		sizeof(var_header)+sizeof(utf_topic)
 	};
 
