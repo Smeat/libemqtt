@@ -256,6 +256,8 @@ int mqtt_publish(mqtt_broker_handle_t* broker, const char* topic, const char* ms
  */
 int mqtt_publish_with_qos(mqtt_broker_handle_t* broker, const char* topic, const char* msg, uint8_t retain, uint8_t qos, uint16_t* message_id);
 
+int mqtt_publish_with_fixed_id(mqtt_broker_handle_t* broker, const char* topic, const char* msg, uint8_t retain, uint8_t qos, uint16_t msg_id);
+
 /** Send a PUBREL message. It's used for PUBLISH message with 2 QoS level.
  * @param broker Data structure that contains the connection information with the broker.
  * @param message_id Message ID

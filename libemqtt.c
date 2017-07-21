@@ -383,7 +383,7 @@ int mqtt_publish(mqtt_broker_handle_t* broker, const char* topic, const char* ms
 	return mqtt_publish_with_qos(broker, topic, msg, retain, 0, NULL);
 }
 
-int mqtt_publish_with_qos(mqtt_broker_handle_t* broker, const char* topic, const char* msg, uint8_t retain, uint8_t qos, uint16_t* message_id) {
+int mqtt_publish_with_fixed_id(mqtt_broker_handle_t* broker, const char* topic, const char* msg, uint8_t retain, uint8_t qos, uint16_t msg_id){
 	uint16_t topiclen = strlen(topic);
 	uint16_t msglen = strlen(msg);
 
@@ -405,12 +405,8 @@ int mqtt_publish_with_qos(mqtt_broker_handle_t* broker, const char* topic, const
 	var_header[1] = topiclen&0xFF;
 	memcpy(var_header+2, topic, topiclen);
 	if(qos_size) {
-		var_header[topiclen+2] = broker->seq>>8;
-		var_header[topiclen+3] = broker->seq&0xFF;
-		if(message_id) { // Returning message id
-			*message_id = broker->seq;
-		}
-		broker->seq++;
+		var_header[topiclen+2] = msg_id>>8;
+		var_header[topiclen+3] = msg_id&0xFF;
 	}
 
 	// Fixed header
@@ -423,7 +419,7 @@ int mqtt_publish_with_qos(mqtt_broker_handle_t* broker, const char* topic, const
 		fixedHeaderSize++;          // add an additional byte for Remaining Length
 	}
 	uint8_t fixed_header[fixedHeaderSize];
-    
+
    // Message Type, DUP flag, QoS level, Retain
    fixed_header[0] = MQTT_MSG_PUBLISH | qos_flag;
 	if(retain) {
@@ -431,13 +427,13 @@ int mqtt_publish_with_qos(mqtt_broker_handle_t* broker, const char* topic, const
    }
    // Remaining Length
    if (remainLen <= 127) {
-       fixed_header[1] = remainLen;
+	   fixed_header[1] = remainLen;
    } else {
-       // first byte is remainder (mod) of 128, then set the MSB to indicate more bytes
-       fixed_header[1] = remainLen % 128;
-       fixed_header[1] = fixed_header[1] | 0x80;
-       // second byte is number of 128s
-       fixed_header[2] = remainLen / 128;
+	   // first byte is remainder (mod) of 128, then set the MSB to indicate more bytes
+	   fixed_header[1] = remainLen % 128;
+	   fixed_header[1] = fixed_header[1] | 0x80;
+	   // second byte is number of 128s
+	   fixed_header[2] = remainLen / 128;
    }
 
 	uint8_t packet[sizeof(fixed_header)+sizeof(var_header)+msglen];
@@ -452,6 +448,12 @@ int mqtt_publish_with_qos(mqtt_broker_handle_t* broker, const char* topic, const
 	}
 
 	return 1;
+}
+
+int mqtt_publish_with_qos(mqtt_broker_handle_t* broker, const char* topic, const char* msg, uint8_t retain, uint8_t qos, uint16_t* message_id) {
+	int status = mqtt_publish_with_fixed_id(broker, topic, msg, retain, qos, broker->seq);
+	broker->seq++;
+	return status;
 }
 
 int mqtt_puback(mqtt_broker_handle_t* broker, uint16_t message_id){
