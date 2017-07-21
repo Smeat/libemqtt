@@ -201,6 +201,8 @@ void mqtt_init(mqtt_broker_handle_t* broker, const char* clientid) {
 	}
 	// Will topic
 	broker->clean_session = 1;
+
+	mqtt_init_will(broker, 0, 0, 0, 0);
 }
 
 void mqtt_init_will(mqtt_broker_handle_t* broker, const char * topic, const char *msg, uint8_t qos, uint8_t retain) {
