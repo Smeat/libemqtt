@@ -266,6 +266,12 @@ int mqtt_publish_with_qos(mqtt_broker_handle_t* broker, const char* topic, const
  */
 int mqtt_pubrel(mqtt_broker_handle_t* broker, uint16_t message_id);
 
+int mqtt_pubrec(mqtt_broker_handle_t* broker, uint16_t message_id);
+
+int mqtt_puback(mqtt_broker_handle_t* broker, uint16_t message_id);
+
+int mqtt_pubcomp(mqtt_broker_handle_t* broker, uint16_t message_id);
+
 /** Subscribe to a topic.
  * @param broker Data structure that contains the connection information with the broker.
  * @param topic The topic name.

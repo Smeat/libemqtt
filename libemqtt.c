@@ -38,6 +38,11 @@
 #define MQTT_USERNAME_FLAG  1<<7
 #define MQTT_PASSWORD_FLAG  1<<6
 
+#define MQTT_SUB_RESERVED 1<<1
+#define MQTT_PUBACK_RESERVED 0<<1
+#define MQTT_PUBREL_RESERVED 0<<1
+#define MQTT_PUBREC_RESERVED 0<<1
+
 
 uint8_t mqtt_num_rem_len_bytes(const uint8_t* buf) {
 	uint8_t num_bytes = 1;
@@ -447,9 +452,56 @@ int mqtt_publish_with_qos(mqtt_broker_handle_t* broker, const char* topic, const
 	return 1;
 }
 
+int mqtt_puback(mqtt_broker_handle_t* broker, uint16_t message_id){
+	uint8_t packet[] = {
+		MQTT_MSG_PUBACK | MQTT_PUBACK_RESERVED, // Message Type, DUP flag, QoS level, Retain
+		0x02, // Remaining length
+		message_id>>8,
+		message_id&0xFF
+	};
+
+	// Send the packet
+	if(broker->send(broker->socket_info, packet, sizeof(packet)) < sizeof(packet)) {
+		return -1;
+	}
+	return 1;
+}
+
 int mqtt_pubrel(mqtt_broker_handle_t* broker, uint16_t message_id) {
 	uint8_t packet[] = {
-		MQTT_MSG_PUBREL | MQTT_QOS1_FLAG, // Message Type, DUP flag, QoS level, Retain
+		MQTT_MSG_PUBREL | MQTT_PUBREL_RESERVED, // Message Type, DUP flag, QoS level, Retain
+		0x02, // Remaining length
+		message_id>>8,
+		message_id&0xFF
+	};
+
+	// Send the packet
+	if(broker->send(broker->socket_info, packet, sizeof(packet)) < sizeof(packet)) {
+		return -1;
+	}
+
+	return 1;
+}
+
+int mqtt_pubrec(mqtt_broker_handle_t* broker, uint16_t message_id) {
+	uint8_t packet[] = {
+		MQTT_MSG_PUBREC | MQTT_PUBREC_RESERVED, // Message Type, DUP flag, QoS level, Retain
+		0x02, // Remaining length
+		message_id>>8,
+		message_id&0xFF
+	};
+
+	// Send the packet
+	if(broker->send(broker->socket_info, packet, sizeof(packet)) < sizeof(packet)) {
+		return -1;
+	}
+
+	return 1;
+}
+
+int mqtt_pubcomp(mqtt_broker_handle_t* broker, uint16_t message_id) {
+	uint8_t packet[] = {
+		MQTT_MSG_PUBCOMP | MQTT_PUBREL_RESERVED, // Message Type, DUP flag, QoS level, Retain
 		0x02, // Remaining length
 		message_id>>8,
 		message_id&0xFF
@@ -486,7 +538,7 @@ int mqtt_subscribe(mqtt_broker_handle_t* broker, const char* topic, uint16_t* me
 
 	// Fixed header
 	uint8_t fixed_header[] = {
-		MQTT_MSG_SUBSCRIBE | 1<<1, // Message Type, Reserved (2nd bit set)
+		MQTT_MSG_SUBSCRIBE | MQTT_SUB_RESERVED, // Message Type, Reserved (2nd bit set)
 		sizeof(var_header)+sizeof(utf_topic)
 	};
 
@@ -525,7 +577,7 @@ int mqtt_unsubscribe(mqtt_broker_handle_t* broker, const char* topic, uint16_t* 
 
 	// Fixed header
 	uint8_t fixed_header[] = {
-		MQTT_MSG_UNSUBSCRIBE | MQTT_QOS1_FLAG, // Message Type, DUP flag, QoS level, Retain
+		MQTT_MSG_UNSUBSCRIBE | MQTT_SUB_RESERVED, // Message Type, DUP flag, QoS level, Retain
 		sizeof(var_header)+sizeof(utf_topic)
 	};
 
