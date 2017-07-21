@@ -337,11 +337,7 @@ int mqtt_connect(mqtt_broker_handle_t* broker)
 	}
 
 	// Send the packet
-	if (broker->send != NULL) {
-		if (broker->send(broker->socket_info, packet, sizeof(packet)) < sizeof(packet)) {
-			return -1;
-		}
-	} else {
+	if (broker->send && broker->send(broker->socket_info, packet, sizeof(packet)) < sizeof(packet)) {
 		return -1;
 	}
 
